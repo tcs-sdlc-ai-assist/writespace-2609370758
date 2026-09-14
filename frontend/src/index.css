@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+  }
+
+  ::selection {
+    @apply bg-ochre/30 text-ink;
+  }
+}
+
+@layer components {
+  .field-label {
+    @apply mb-2 block text-sm font-bold tracking-wide text-ink;
+  }
+
+  .text-field {
+    @apply w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-ink outline-none transition focus:border-clay focus:ring-4 focus:ring-clay/15;
+  }
+
+  .primary-button {
+    @apply inline-flex items-center justify-center rounded-xl bg-clay px-5 py-3 font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#813a24] focus:outline-none focus-visible:ring-4 focus-visible:ring-clay/30 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
