@@ -10,6 +10,7 @@ import RegisterPage from './pages/RegisterPage';
 import LandingPage from './pages/LandingPage';
 import Home from './pages/Home';
 import ReadBlog from './pages/ReadBlog';
+import WriteBlog from './pages/WriteBlog';
 
 /** Render a compact temporary surface for routes implemented in subsequent slices. */
 function Placeholder({ title }) {
@@ -34,8 +35,8 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/blogs" element={<ProtectedRoute mode="auth"><Home /></ProtectedRoute>} />
         <Route path="/blog/:id" element={<ProtectedRoute mode="auth"><ReadBlog /></ProtectedRoute>} />
-        <Route path="/write" element={<ProtectedRoute mode="auth"><Placeholder title="Write" /></ProtectedRoute>} />
-        <Route path="/edit/:id" element={<ProtectedRoute mode="edit" post={postForEdit}><Placeholder title="Edit" /></ProtectedRoute>} />
+        <Route path="/write" element={<ProtectedRoute mode="auth"><WriteBlog /></ProtectedRoute>} />
+        <Route path="/edit/:id" element={<ProtectedRoute mode="edit" post={postForEdit}><WriteBlog /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute mode="admin"><Placeholder title="Admin" /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute mode="admin"><Placeholder title="Users" /></ProtectedRoute>} />
       </Routes>
