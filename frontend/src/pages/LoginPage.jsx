@@ -38,12 +38,20 @@ export default function LoginPage() {
         <h1 className="mt-3 font-display text-4xl font-bold tracking-tight">Welcome back.</h1>
         <p className="mt-3 text-sm leading-6 text-stone-600">Sign in to continue with this browser’s private writing space.</p>
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
-          <div><label className="field-label" htmlFor="login-username">Username</label><input id="login-username" className="text-field" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" aria-required="true" required /></div>
-          <div><label className="field-label" htmlFor="login-password">Password</label><input id="login-password" type="password" className="text-field" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" aria-required="true" required /></div>
+          <div>
+            <label className="field-label" htmlFor="login-username">Username</label>
+            <input id="login-username" className="text-field" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" aria-required="true" required />
+          </div>
+          <div>
+            <label className="field-label" htmlFor="login-password">Password</label>
+            <input id="login-password" type="password" className="text-field" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" aria-required="true" required />
+          </div>
           {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-800">{error}</p>}
           <button type="submit" className="primary-button w-full">Login</button>
         </form>
-        <p className="mt-6 text-center text-sm text-stone-600">New here? <Link className="font-bold text-clay underline underline-offset-4" to="/register">Create a local account</Link></p>
+        <p className="mt-6 text-center text-sm text-stone-600">
+          New here? <Link className="font-bold text-clay underline underline-offset-4" to="/register">Create a local account</Link>
+        </p>
         <p className="mt-6 border-t border-stone-100 pt-4 text-xs leading-5 text-stone-500">Demo admin: <strong>admin / admin</strong>. Credentials stay in this browser and are not secure.</p>
       </section>
     </main>

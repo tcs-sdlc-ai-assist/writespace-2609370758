@@ -20,29 +20,55 @@ test.beforeEach(async ({ page }) => {
   }, fixturePosts);
 });
 
-test('guest preview links to login while authenticated readers can view full local content', async ({ page }) => {
+test('guest preview links to login', async ({ page }) => {
   const errors = captureBrowserErrors(page);
   await page.goto('/');
+
   await expect(page.getByRole('heading', { name: 'Latest note' })).toBeVisible();
   await page.getByRole('link', { name: 'Latest note' }).click();
   await expect(page).toHaveURL(/\/login$/);
+  expect(errors).toEqual([]);
+});
 
+test('authenticated readers open the latest post from the landing page and view its full content', async ({ page }) => {
+  const errors = captureBrowserErrors(page);
   await page.addInitScript(() => {
     window.localStorage.setItem('writespace_session', JSON.stringify({ userId: 'reader', username: 'reader', displayName: 'Reader', role: 'user' }));
   });
-  await page.goto('/blog/latest');
+  await page.goto('/');
+
+  await page.getByRole('link', { name: 'Read post' }).first().click();
+  await expect(page).toHaveURL(/\/blog\/latest$/);
+  await expect(page.getByRole('heading', { name: 'Latest note' })).toBeVisible();
+  await expect(page.getByText('First paragraph.')).toBeVisible();
   await expect(page.getByText('Second paragraph with the complete post text.')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Back' })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
-test('owners can see management links without deleting from local storage', async ({ page }) => {
+test('owners can see management links after opening a post from the landing page', async ({ page }) => {
   const errors = captureBrowserErrors(page);
   await page.addInitScript(() => {
     window.localStorage.setItem('writespace_session', JSON.stringify({ userId: 'owner', username: 'owner', displayName: 'Owner', role: 'user' }));
   });
-  await page.goto('/blog/latest');
+  await page.goto('/');
+
+  await page.getByRole('link', { name: 'Latest note' }).click();
   await expect(page.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/edit/latest');
   await expect(page.getByRole('link', { name: 'Delete' })).toHaveAttribute('href', '/edit/latest');
+  expect(errors).toEqual([]);
+});
+
+test('landing page shows the exact empty state without article cards or links', async ({ page }) => {
+  const errors = captureBrowserErrors(page);
+  await page.addInitScript(() => {
+    window.localStorage.clear();
+    window.localStorage.setItem('writespace_posts', JSON.stringify([]));
+  });
+  await page.goto('/');
+
+  await expect(page.getByText('No posts yet — check back soon!', { exact: true })).toBeVisible();
+  await expect(page.locator('article')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Read post' })).toHaveCount(0);
   expect(errors).toEqual([]);
 });

@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import AdminDashboard from '../pages/AdminDashboard';
@@ -9,6 +9,7 @@ import UserRow from '../components/UserRow';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { setSession } from '../utils/auth';
 import { getUsers, savePosts, saveUsers } from '../utils/storage';
+import * as storage from '../utils/storage';
 
 const adminSession = { userId: 'admin', username: 'admin', displayName: 'Admin', role: 'admin' };
 
@@ -74,6 +75,67 @@ describe('administration', () => {
 
     expect(getUsers()[1]).toEqual({ id: 'created-user', displayName: 'New User', username: 'new-user', password: 'secret', role: 'user', createdAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T.*Z$/) });
     expect(screen.getByRole('status')).toHaveTextContent('New User was added.');
+  });
+
+  it('stores and renders large hostile admin-created input as literal text without markup', async () => {
+    const user = userEvent.setup();
+    const hostileDisplayName = `<img src=x onerror="window.__adminXss=1">${'x'.repeat(10_000)}`;
+    const hostileUsername = `<svg onload="window.__adminXss=1">${'u'.repeat(10_000)}`;
+    setSession(adminSession);
+    vi.stubGlobal('crypto', { randomUUID: vi.fn(() => 'hostile-user') });
+    renderPage(<UserManagement />);
+
+    fireEvent.change(screen.getByLabelText('Display Name'), { target: { value: hostileDisplayName } });
+    fireEvent.change(screen.getByLabelText('Username'), { target: { value: hostileUsername } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret' } });
+    await user.click(screen.getByRole('button', { name: 'Add user' }));
+
+    expect(getUsers()).toEqual([expect.objectContaining({ id: 'hostile-user', displayName: hostileDisplayName, username: hostileUsername })]);
+    expect(screen.getByRole('heading', { name: hostileDisplayName })).toBeInTheDocument();
+    expect(screen.getAllByText(hostileUsername)).toHaveLength(2);
+    expect(document.querySelector('img[src="x"], svg[onload]')).toBeNull();
+    expect(window.__adminXss).toBeUndefined();
+  });
+
+  it('shows an error and keeps users and form state unchanged when saving a new user fails', async () => {
+    const user = userEvent.setup();
+    const existingUser = { id: 'keep', displayName: 'Keep Me', username: 'keep', password: 'secret', role: 'user' };
+    setSession(adminSession);
+    saveUsers([existingUser]);
+    vi.stubGlobal('crypto', { randomUUID: vi.fn(() => 'failed-user') });
+    vi.spyOn(storage, 'saveUsers').mockImplementation(() => { throw new Error('quota exceeded'); });
+    renderPage(<UserManagement />);
+
+    await user.type(screen.getByLabelText('Display Name'), 'Cannot Save');
+    await user.type(screen.getByLabelText('Username'), 'cannot-save');
+    await user.type(screen.getByLabelText('Password'), 'secret');
+    await user.click(screen.getByRole('button', { name: 'Add user' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('could not be saved');
+    expect(getUsers()).toEqual([existingUser]);
+    expect(screen.getByRole('heading', { name: 'Keep Me' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Cannot Save' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Display Name')).toHaveValue('Cannot Save');
+    expect(screen.getByLabelText('Username')).toHaveValue('cannot-save');
+    expect(screen.getByLabelText('Password')).toHaveValue('secret');
+  });
+
+  it('shows an error and keeps users and rendering unchanged when deleting a user fails', async () => {
+    const user = userEvent.setup();
+    const removableUser = { id: 'remove', displayName: 'Remove Me', username: 'remove', password: 'secret', role: 'user' };
+    const retainedUser = { id: 'keep', displayName: 'Keep Me', username: 'keep', password: 'secret', role: 'user' };
+    setSession(adminSession);
+    saveUsers([removableUser, retainedUser]);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.spyOn(storage, 'saveUsers').mockImplementation(() => { throw new Error('quota exceeded'); });
+    renderPage(<UserManagement />);
+
+    await user.click(screen.getAllByRole('button', { name: 'Delete Remove Me' })[0]);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('could not be deleted');
+    expect(getUsers()).toEqual([removableUser, retainedUser]);
+    expect(screen.getByRole('heading', { name: 'Remove Me' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Keep Me' })).toBeInTheDocument();
   });
 
   it('disables deletion for the permanent admin and active-session user', () => {

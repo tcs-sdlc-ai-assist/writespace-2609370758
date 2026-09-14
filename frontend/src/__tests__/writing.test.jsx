@@ -1,21 +1,22 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { setSession } from '../utils/auth';
 import { getPosts, savePosts } from '../utils/storage';
 import WriteBlog from '../pages/WriteBlog';
+import ReadBlog from '../pages/ReadBlog';
 
 const owner = { userId: 'owner', username: 'owner', displayName: 'Owner Name', role: 'user' };
 
-function renderWriter(path) {
+function renderWriter(path, { renderReadBlog = false } = {}) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/write" element={<WriteBlog />} />
         <Route path="/edit/:id" element={<WriteBlog />} />
-        <Route path="/blog/:id" element={<p>Post destination</p>} />
+        <Route path="/blog/:id" element={renderReadBlog ? <ReadBlog /> : <p>Post destination</p>} />
         <Route path="/blogs" element={<p>Blogs destination</p>} />
         <Route path="/login" element={<p>Login destination</p>} />
       </Routes>
@@ -64,6 +65,88 @@ describe('writing and editing', () => {
       authorName: 'Owner Name',
       createdAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T.*Z$/),
     }]);
+  });
+
+  it('renders hostile and very large published text literally rather than as markup', async () => {
+    const user = userEvent.setup();
+    const hostileText = '<img src=x onerror=alert(1)> <script>alert("xss")</script>';
+    const veryLargeText = `${hostileText}\n${'Long literal text. '.repeat(10000)}`;
+    const publishedContent = veryLargeText.trim();
+    setSession(owner);
+    vi.stubGlobal('crypto', { randomUUID: vi.fn(() => 'literal-post-id') });
+    renderWriter('/write', { renderReadBlog: true });
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: hostileText } });
+    fireEvent.change(screen.getByLabelText('Content'), { target: { value: veryLargeText } });
+    await user.click(screen.getByRole('button', { name: 'Publish blog' }));
+
+    expect(screen.getByRole('heading', { name: hostileText })).toBeInTheDocument();
+    expect(document.querySelector('article div').textContent).toBe(publishedContent);
+    expect(document.querySelector('img, script')).not.toBeInTheDocument();
+    expect(getPosts()[0]).toMatchObject({ title: hostileText, content: publishedContent });
+  });
+
+  it('shows an inline save error and preserves posts when creating cannot write storage', async () => {
+    const user = userEvent.setup();
+    const persistedPosts = [{ id: 'existing', title: 'Existing', content: 'Existing body', authorId: 'owner', authorName: 'Owner Name', createdAt: '2024-01-01T00:00:00.000Z' }];
+    setSession(owner);
+    savePosts(persistedPosts);
+    const persistedValue = window.localStorage.getItem('writespace_posts');
+    vi.stubGlobal('crypto', { randomUUID: vi.fn(() => 'failed-create') });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
+      if (key === 'writespace_posts') throw new Error('quota exceeded');
+      return Storage.prototype.setItem.call(window.localStorage, key, value);
+    });
+    renderWriter('/write');
+
+    await user.type(screen.getByLabelText('Title'), 'Cannot save');
+    await user.type(screen.getByLabelText('Content'), 'The persisted collection must remain unchanged.');
+    await user.click(screen.getByRole('button', { name: 'Publish blog' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Your post could not be saved. Please check available browser storage and try again.');
+    expect(screen.getByRole('heading', { name: 'Write a blog' })).toBeInTheDocument();
+    expect(window.localStorage.getItem('writespace_posts')).toBe(persistedValue);
+  });
+
+  it('shows an inline save error and preserves posts when updating cannot write storage', async () => {
+    const user = userEvent.setup();
+    const persistedPosts = [{ id: 'post-1', title: 'Original', content: 'Original body', authorId: 'owner', authorName: 'Owner Name', createdAt: '2024-01-01T00:00:00.000Z' }];
+    setSession(owner);
+    savePosts(persistedPosts);
+    const persistedValue = window.localStorage.getItem('writespace_posts');
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
+      if (key === 'writespace_posts') throw new Error('quota exceeded');
+      return Storage.prototype.setItem.call(window.localStorage, key, value);
+    });
+    renderWriter('/edit/post-1');
+
+    await user.clear(screen.getByLabelText('Title'));
+    await user.type(screen.getByLabelText('Title'), 'Updated');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Your post could not be saved. Please check available browser storage and try again.');
+    expect(screen.getByRole('heading', { name: 'Edit blog' })).toBeInTheDocument();
+    expect(window.localStorage.getItem('writespace_posts')).toBe(persistedValue);
+  });
+
+  it('shows an inline delete error and preserves posts when deletion cannot write storage', async () => {
+    const user = userEvent.setup();
+    const persistedPosts = [{ id: 'post-1', title: 'Original', content: 'Original body', authorId: 'owner', authorName: 'Owner Name', createdAt: '2024-01-01T00:00:00.000Z' }];
+    setSession(owner);
+    savePosts(persistedPosts);
+    const persistedValue = window.localStorage.getItem('writespace_posts');
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
+      if (key === 'writespace_posts') throw new Error('quota exceeded');
+      return Storage.prototype.setItem.call(window.localStorage, key, value);
+    });
+    renderWriter('/edit/post-1');
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Your post could not be deleted. Please check available browser storage and try again.');
+    expect(screen.getByRole('heading', { name: 'Edit blog' })).toBeInTheDocument();
+    expect(window.localStorage.getItem('writespace_posts')).toBe(persistedValue);
   });
 
   it('preserves immutable edit fields while changing only trimmed title and content', async () => {

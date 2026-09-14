@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { getUsers, saveUsers } from '../utils/storage';
@@ -8,6 +8,7 @@ import { ADMIN_SESSION, getSession, setSession } from '../utils/auth';
 import RegisterPage from '../pages/RegisterPage';
 import LoginPage from '../pages/LoginPage';
 import ProtectedRoute from '../components/ProtectedRoute';
+import Navbar from '../components/Navbar';
 
 afterEach(() => {
   cleanup();
@@ -20,9 +21,25 @@ function renderAt(path, element) {
 }
 
 describe('browser adapters', () => {
-  it('falls back to empty collections and null session for malformed storage', () => {
-    window.localStorage.setItem('writespace_users', '{bad json');
+  it('returns empty users and no session when identity storage values are missing', () => {
+    expect(getUsers()).toEqual([]);
+    expect(getSession()).toBeNull();
+  });
+
+  it('rejects non-array users and malformed or invalid session values', () => {
+    window.localStorage.setItem('writespace_users', JSON.stringify({ username: 'not-an-array' }));
+    window.localStorage.setItem('writespace_session', '{bad json');
+    expect(getUsers()).toEqual([]);
+    expect(getSession()).toBeNull();
+
     window.localStorage.setItem('writespace_session', JSON.stringify({ role: 'admin' }));
+    expect(getSession()).toBeNull();
+  });
+
+  it('fails closed when localStorage reads throw', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('Storage access denied');
+    });
     expect(getUsers()).toEqual([]);
     expect(getSession()).toBeNull();
   });
@@ -62,6 +79,24 @@ describe('registration', () => {
     expect(screen.getByText('Blogs destination')).toBeInTheDocument();
     expect(getUsers()[0]).toMatchObject({ displayName: 'Mina', username: 'mina', role: 'user' });
     expect(getSession()).toMatchObject({ username: 'mina', displayName: 'Mina', role: 'user' });
+  });
+
+  it('persists a large image-shaped display name and renders it as literal text', async () => {
+    const user = userEvent.setup();
+    const displayName = `${'A'.repeat(2048)}<img src="x" onerror="window.__injected = true">`;
+    renderAt('/register', <RegisterPage />);
+    fireEvent.change(screen.getByLabelText('Display Name'), { target: { value: displayName } });
+    await user.type(screen.getByLabelText('Username'), 'boundary-user');
+    await user.type(screen.getByLabelText('Password'), 'secret');
+    await user.type(screen.getByLabelText('Confirm Password'), 'secret');
+    await user.click(screen.getByRole('button', { name: 'Create account' }));
+
+    expect(getUsers()[0]).toMatchObject({ displayName, username: 'boundary-user', role: 'user' });
+    cleanup();
+    const { container } = render(<MemoryRouter><Navbar session={getSession()} /></MemoryRouter>);
+    expect(screen.getByText(displayName)).toBeInTheDocument();
+    expect(container.querySelector('img[src="x"]')).toBeNull();
+    expect(window.__injected).toBeUndefined();
   });
 });
 

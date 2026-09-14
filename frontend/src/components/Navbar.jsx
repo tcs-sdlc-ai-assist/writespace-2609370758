@@ -27,7 +27,15 @@ export default function Navbar({ session }) {
             <span aria-hidden="true">Menu</span>
           </button>
           <div className="hidden items-center gap-1 md:flex">
-            {links.map((link) => <NavLink key={link.to} to={link.to} className={({ isActive }) => `rounded-full px-4 py-2 text-sm font-bold ${isActive ? 'bg-mist text-clay' : 'text-stone-600 hover:bg-mist'}`}>{link.label}</NavLink>)}
+            {links.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                className={({ isActive }) => `rounded-full px-4 py-2 text-sm font-bold ${isActive ? 'bg-mist text-clay' : 'text-stone-600 hover:bg-mist'}`}
+              >
+                {link.label}
+              </NavLink>
+            ))}
           </div>
           <div className="hidden items-center gap-2 md:flex">
             <Avatar role={session.role} />
@@ -35,7 +43,21 @@ export default function Navbar({ session }) {
             <button type="button" onClick={handleLogout} className="rounded-lg px-3 py-2 text-sm font-bold text-clay hover:bg-mist">Logout</button>
           </div>
         </div>
-        {isOpen && <div className="mt-3 grid gap-2 border-t border-stone-200 pt-3 md:hidden">{links.map((link) => <NavLink key={link.to} to={link.to} onClick={() => setIsOpen(false)} className="rounded-lg px-3 py-2 font-bold hover:bg-mist">{link.label}</NavLink>)}<button type="button" onClick={handleLogout} className="rounded-lg px-3 py-2 text-left font-bold text-clay hover:bg-mist">Logout</button></div>}
+        {isOpen && (
+          <div className="mt-3 grid gap-2 border-t border-stone-200 pt-3 md:hidden">
+            {links.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                onClick={() => setIsOpen(false)}
+                className="rounded-lg px-3 py-2 font-bold hover:bg-mist"
+              >
+                {link.label}
+              </NavLink>
+            ))}
+            <button type="button" onClick={handleLogout} className="rounded-lg px-3 py-2 text-left font-bold text-clay hover:bg-mist">Logout</button>
+          </div>
+        )}
       </nav>
     </header>
   );

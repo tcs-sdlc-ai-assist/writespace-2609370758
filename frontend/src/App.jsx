@@ -16,7 +16,13 @@ import UserManagement from './pages/UserManagement';
 
 /** Render a compact temporary surface for routes implemented in subsequent slices. */
 function Placeholder({ title }) {
-  return <main className="mx-auto max-w-3xl px-5 py-16"><p className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-clay">WriteSpace</p><h1 className="mt-3 font-display text-5xl font-bold">{title}</h1><p className="mt-4 max-w-xl text-stone-600">This part of the local writing room is being prepared.</p></main>;
+  return (
+    <main className="mx-auto max-w-3xl px-5 py-16">
+      <p className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-clay">WriteSpace</p>
+      <h1 className="mt-3 font-display text-5xl font-bold">{title}</h1>
+      <p className="mt-4 max-w-xl text-stone-600">This part of the local writing room is being prepared.</p>
+    </main>
+  );
 }
 
 Placeholder.propTypes = {

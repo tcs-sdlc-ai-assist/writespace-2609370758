@@ -45,14 +45,30 @@ export default function RegisterPage() {
         <h1 className="mt-3 font-display text-4xl font-bold tracking-tight">Make your space.</h1>
         <p className="mt-3 text-sm leading-6 text-stone-600">Your account is saved only in this browser.</p>
         <form className="mt-8 space-y-4" onSubmit={handleSubmit} noValidate>
-          <div><label className="field-label" htmlFor="display-name">Display Name</label><input id="display-name" name="displayName" className="text-field" value={form.displayName} onChange={updateField} aria-required="true" aria-invalid={Boolean(error && !form.displayName.trim())} /></div>
-          <div><label className="field-label" htmlFor="register-username">Username</label><input id="register-username" name="username" className="text-field" value={form.username} onChange={updateField} autoComplete="username" aria-required="true" aria-invalid={Boolean(error && !form.username.trim())} /></div>
-          <div><label className="field-label" htmlFor="register-password">Password</label><input id="register-password" name="password" type="password" className="text-field" value={form.password} onChange={updateField} autoComplete="new-password" aria-required="true" aria-invalid={Boolean(error && !form.password)} /></div>
-          <div><label className="field-label" htmlFor="confirm-password">Confirm Password</label><input id="confirm-password" name="confirmPassword" type="password" className="text-field" value={form.confirmPassword} onChange={updateField} autoComplete="new-password" aria-required="true" aria-invalid={Boolean(error && !form.confirmPassword)} /></div>
-          {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-800">{error}</p>}
+          <div>
+            <label className="field-label" htmlFor="display-name">Display Name</label>
+            <input id="display-name" name="displayName" className="text-field" value={form.displayName} onChange={updateField} aria-required="true" aria-invalid={Boolean(error && !form.displayName.trim())} />
+          </div>
+          <div>
+            <label className="field-label" htmlFor="register-username">Username</label>
+            <input id="register-username" name="username" className="text-field" value={form.username} onChange={updateField} autoComplete="username" aria-required="true" aria-invalid={Boolean(error && !form.username.trim())} />
+          </div>
+          <div>
+            <label className="field-label" htmlFor="register-password">Password</label>
+            <input id="register-password" name="password" type="password" className="text-field" value={form.password} onChange={updateField} autoComplete="new-password" aria-required="true" aria-invalid={Boolean(error && !form.password)} />
+          </div>
+          <div>
+            <label className="field-label" htmlFor="confirm-password">Confirm Password</label>
+            <input id="confirm-password" name="confirmPassword" type="password" className="text-field" value={form.confirmPassword} onChange={updateField} autoComplete="new-password" aria-required="true" aria-invalid={Boolean(error && !form.confirmPassword)} />
+          </div>
+          {error && (
+            <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-800">{error}</p>
+          )}
           <button type="submit" className="primary-button w-full">Create account</button>
         </form>
-        <p className="mt-6 text-center text-sm text-stone-600">Already have a local account? <Link className="font-bold text-clay underline underline-offset-4" to="/login">Log in</Link></p>
+        <p className="mt-6 text-center text-sm text-stone-600">
+          Already have a local account? <Link className="font-bold text-clay underline underline-offset-4" to="/login">Log in</Link>
+        </p>
       </section>
     </main>
   );

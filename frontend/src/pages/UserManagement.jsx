@@ -135,9 +135,18 @@ export default function UserManagement() {
         <div className="mt-5 hidden overflow-x-auto rounded-xl border border-stone-200 bg-white md:block">
           <table className="min-w-full text-left">
             <thead className="border-b border-stone-200 bg-mist text-xs font-bold uppercase tracking-[0.12em] text-stone-600">
-              <tr><th scope="col" className="px-4 py-3">Name</th><th scope="col" className="px-4 py-3">Username</th><th scope="col" className="px-4 py-3">Role</th><th scope="col" className="px-4 py-3 text-right">Action</th></tr>
+              <tr>
+                <th scope="col" className="px-4 py-3">Name</th>
+                <th scope="col" className="px-4 py-3">Username</th>
+                <th scope="col" className="px-4 py-3">Role</th>
+                <th scope="col" className="px-4 py-3 text-right">Action</th>
+              </tr>
             </thead>
-            <tbody>{allUsers.map((user) => <UserRow key={user.id} user={user} currentUserId={currentUserId} onDelete={handleDelete} variant="table" />)}</tbody>
+            <tbody>
+              {allUsers.map((user) => (
+                <UserRow key={user.id} user={user} currentUserId={currentUserId} onDelete={handleDelete} variant="table" />
+              ))}
+            </tbody>
           </table>
         </div>
       </section>

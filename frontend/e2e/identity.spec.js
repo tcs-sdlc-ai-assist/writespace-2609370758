@@ -26,7 +26,19 @@ test('registers a browser-local user and retains the created session', async ({ 
   expect(errors).toEqual([]);
 });
 
-test('logs in with admin precedence and captures no browser errors', async ({ page }) => {
+test('rejects invalid credentials without creating a session or browser errors', async ({ page }) => {
+  const errors = captureBrowserErrors(page);
+  await page.goto('/login');
+  await page.getByLabel('Username').fill('not-a-user');
+  await page.getByLabel('Password').fill('wrong-password');
+  await page.getByRole('button', { name: 'Login' }).click();
+  await expect(page.getByRole('alert')).toHaveText('Invalid username or password.');
+  await expect(page).toHaveURL(/\/login$/);
+  await expect.poll(() => page.evaluate(() => window.localStorage.getItem('writespace_session'))).toBeNull();
+  expect(errors).toEqual([]);
+});
+
+test('logs in with admin precedence, then logs out through visible navigation without browser errors', async ({ page }) => {
   const errors = captureBrowserErrors(page);
   await page.goto('/login');
   await page.getByLabel('Username').fill('admin');
@@ -35,5 +47,11 @@ test('logs in with admin precedence and captures no browser errors', async ({ pa
   await expect(page).toHaveURL(/\/admin$/);
   const session = await page.evaluate(() => JSON.parse(window.localStorage.getItem('writespace_session')));
   expect(session).toMatchObject({ userId: 'admin', role: 'admin' });
+
+  await page.getByRole('button', { name: 'Logout' }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('navigation', { name: 'Public navigation' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Logout' })).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => window.localStorage.getItem('writespace_session'))).toBeNull();
   expect(errors).toEqual([]);
 });
