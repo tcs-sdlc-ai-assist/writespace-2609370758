@@ -23,7 +23,13 @@ export default function Navbar({ session }) {
       <nav aria-label="Authenticated navigation" className="mx-auto max-w-6xl px-5 py-3">
         <div className="flex items-center justify-between gap-4">
           <Link to="/" className="font-display text-2xl font-bold tracking-tight text-ink">WriteSpace<span className="text-clay">.</span></Link>
-          <button type="button" className="rounded-lg p-2 text-ink md:hidden" aria-label="Toggle navigation" aria-expanded={isOpen} onClick={() => setIsOpen((open) => !open)}>
+          <button
+            type="button"
+            className="rounded-lg p-2 text-ink md:hidden"
+            aria-label="Toggle navigation"
+            aria-expanded={isOpen}
+            onClick={() => setIsOpen((open) => !open)}
+          >
             <span aria-hidden="true">Menu</span>
           </button>
           <div className="hidden items-center gap-1 md:flex">
@@ -40,7 +46,13 @@ export default function Navbar({ session }) {
           <div className="hidden items-center gap-2 md:flex">
             <Avatar role={session.role} />
             <span className="text-sm font-bold">{session.displayName}</span>
-            <button type="button" onClick={handleLogout} className="rounded-lg px-3 py-2 text-sm font-bold text-clay hover:bg-mist">Logout</button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-lg px-3 py-2 text-sm font-bold text-clay hover:bg-mist"
+            >
+              Logout
+            </button>
           </div>
         </div>
         {isOpen && (
@@ -55,7 +67,13 @@ export default function Navbar({ session }) {
                 {link.label}
               </NavLink>
             ))}
-            <button type="button" onClick={handleLogout} className="rounded-lg px-3 py-2 text-left font-bold text-clay hover:bg-mist">Logout</button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-lg px-3 py-2 text-left font-bold text-clay hover:bg-mist"
+            >
+              Logout
+            </button>
           </div>
         )}
       </nav>

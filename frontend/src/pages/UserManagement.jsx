@@ -106,19 +106,48 @@ export default function UserManagement() {
       <section className="mt-10 max-w-2xl rounded-xl border border-stone-200 bg-white p-5 sm:p-6" aria-labelledby="create-user-heading">
         <h2 id="create-user-heading" className="font-display text-2xl font-bold text-ink">Add a user</h2>
         <form className="mt-6 grid gap-5 sm:grid-cols-2" onSubmit={handleSubmit} noValidate>
-          {error && <p role="alert" className="sm:col-span-2 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">{error}</p>}
+          {error && (
+            <p
+              role="alert"
+              className="sm:col-span-2 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800"
+            >
+              {error}
+            </p>
+          )}
           {status && <p role="status" className="sm:col-span-2 rounded-lg border border-moss/30 bg-moss/10 px-4 py-3 text-sm font-semibold text-moss">{status}</p>}
           <div>
             <label className="field-label" htmlFor="user-display-name">Display Name</label>
-            <input id="user-display-name" className="text-field" value={displayName} onChange={(event) => setDisplayName(event.target.value)} aria-required="true" aria-invalid={Boolean(error)} />
+            <input
+              id="user-display-name"
+              className="text-field"
+              value={displayName}
+              onChange={(event) => setDisplayName(event.target.value)}
+              aria-required="true"
+              aria-invalid={Boolean(error)}
+            />
           </div>
           <div>
             <label className="field-label" htmlFor="user-username">Username</label>
-            <input id="user-username" className="text-field" value={username} onChange={(event) => setUsername(event.target.value)} aria-required="true" aria-invalid={Boolean(error)} />
+            <input
+              id="user-username"
+              className="text-field"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              aria-required="true"
+              aria-invalid={Boolean(error)}
+            />
           </div>
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="user-password">Password</label>
-            <input id="user-password" type="password" className="text-field" value={password} onChange={(event) => setPassword(event.target.value)} aria-required="true" aria-invalid={Boolean(error)} />
+            <input
+              id="user-password"
+              type="password"
+              className="text-field"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              aria-required="true"
+              aria-invalid={Boolean(error)}
+            />
           </div>
           <div className="sm:col-span-2"><button type="submit" className="primary-button">Add user</button></div>
         </form>
