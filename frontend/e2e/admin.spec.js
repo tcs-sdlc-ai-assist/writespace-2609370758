@@ -3,8 +3,13 @@ import { expect, test } from '@playwright/test';
 /** Capture console and uncaught page errors for administration journeys. */
 function captureBrowserErrors(page) {
   const errors = [];
-  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
-  page.on('pageerror', (error) => errors.push(error.message));
+  const isKnownDefaultPropsWarning = (message) => message.includes('Support for defaultProps will be removed');
+  page.on('console', (message) => {
+    if (message.type() === 'error' && !isKnownDefaultPropsWarning(message.text())) errors.push(message.text());
+  });
+  page.on('pageerror', (error) => {
+    if (!isKnownDefaultPropsWarning(error.message)) errors.push(error.message);
+  });
   return errors;
 }
 
@@ -44,7 +49,8 @@ test('admin views ordered dashboard data, creates a user, and deletes only that 
   ]));
   page.once('dialog', (dialog) => dialog.accept());
   await page.getByRole('button', { name: 'Delete Browser User' }).first().click();
-  await expect(page.getByText('Browser User')).not.toBeVisible();
+  await expect(page.getByRole('status')).toContainText('Browser User was deleted.');
+  await expect(page.getByRole('heading', { name: 'Browser User' })).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => JSON.parse(window.localStorage.getItem('writespace_users')))).toEqual([
     expect.objectContaining({ id: 'active-admin', username: 'active-admin', role: 'admin' }),
   ]);

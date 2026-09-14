@@ -15,7 +15,7 @@ export default function LandingPage() {
         <h1 className="mt-4 font-display text-5xl font-bold tracking-tight text-ink sm:text-6xl">Words worth making time for.</h1>
         <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-600">Read the newest notes from this local writing community.</p>
       </section>
-      <section aria-labelledby="latest-posts" className="mt-14">
+      <section aria-label="latest-posts" className="mt-14">
         <div className="flex items-baseline justify-between gap-4">
           <h2 id="latest-posts" className="font-display text-3xl font-bold tracking-tight">Latest writing</h2>
           <p className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-stone-500">Newest first</p>

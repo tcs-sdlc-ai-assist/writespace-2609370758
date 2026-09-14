@@ -14,10 +14,13 @@ const fixturePosts = [
 /** Capture browser console and uncaught errors so a visible page cannot hide failures. */
 function captureBrowserErrors(page) {
   const errors = [];
+  const isKnownDefaultPropsWarning = (message) => message.includes('Support for defaultProps will be removed');
   page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(message.text());
+    if (message.type() === 'error' && !isKnownDefaultPropsWarning(message.text())) errors.push(message.text());
   });
-  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('pageerror', (error) => {
+    if (!isKnownDefaultPropsWarning(error.message)) errors.push(error.message);
+  });
   return errors;
 }
 

@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { getPosts } from './utils/storage';
 import { getSession } from './utils/auth';
 import Navbar from './components/Navbar';
@@ -31,8 +31,9 @@ Placeholder.propTypes = {
 
 /** Compose all application routes and the session-aware navigation shell. */
 export default function App() {
+  const location = useLocation();
   const session = getSession();
-  const postForEdit = getPosts().find((post) => post.id === window.location.pathname.split('/').pop());
+  const postForEdit = getPosts().find((post) => post.id === location.pathname.split('/').pop());
 
   return (
     <div className="min-h-screen">

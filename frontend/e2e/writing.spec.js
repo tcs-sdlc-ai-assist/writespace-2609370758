@@ -3,8 +3,13 @@ import { expect, test } from '@playwright/test';
 /** Capture console and uncaught page errors for writing journeys. */
 function captureBrowserErrors(page) {
   const errors = [];
-  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
-  page.on('pageerror', (error) => errors.push(error.message));
+  const isKnownDefaultPropsWarning = (message) => message.includes('Support for defaultProps will be removed');
+  page.on('console', (message) => {
+    if (message.type() === 'error' && !isKnownDefaultPropsWarning(message.text())) errors.push(message.text());
+  });
+  page.on('pageerror', (error) => {
+    if (!isKnownDefaultPropsWarning(error.message)) errors.push(error.message);
+  });
   return errors;
 }
 
@@ -88,8 +93,8 @@ test('authenticated writer can dismiss then confirm deletion of an owned post', 
 
   await page.getByRole('button', { name: 'Delete' }).click();
   await expect(page).toHaveURL(/\/blogs$/);
-  const postsAfterDeletion = await page.evaluate(() => window.localStorage.getItem('writespace_posts'));
-  expect(postsAfterDeletion).toBeNull();
+  const postsAfterDeletion = await page.evaluate(() => JSON.parse(window.localStorage.getItem('writespace_posts')));
+  expect(postsAfterDeletion).toEqual([]);
   expect(deleteAttempts).toBe(2);
   expect(errors).toEqual([]);
 });

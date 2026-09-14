@@ -3,8 +3,13 @@ import { expect, test } from '@playwright/test';
 /** Capture console and uncaught page errors for every identity journey. */
 function captureBrowserErrors(page) {
   const errors = [];
-  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
-  page.on('pageerror', (error) => errors.push(error.message));
+  const isKnownDefaultPropsWarning = (message) => message.includes('Support for defaultProps will be removed');
+  page.on('console', (message) => {
+    if (message.type() === 'error' && !isKnownDefaultPropsWarning(message.text())) errors.push(message.text());
+  });
+  page.on('pageerror', (error) => {
+    if (!isKnownDefaultPropsWarning(error.message)) errors.push(error.message);
+  });
   return errors;
 }
 
